@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+dist/
+build/
+
+# Virtual envs
+.venv/
+venv/
+
+# Tools & caches
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Editors/OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Env & secrets (оставляем только пример)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa
+id_rsa.pub
+*.crt
+
+# Docker/compose local junk
+docker-compose.override.yml
+logs/
+tmp/
