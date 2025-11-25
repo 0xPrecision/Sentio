@@ -1,9 +1,9 @@
  [tool.poetry]
- name = "Sentio"
+ name = "sentio"
  version = "0.1.0"
  description = "SaaS Telegram booking bot for services"
  authors = ["0xPrecision"]
- readmy = "READMI.md"
+ readme = "README.md"
  package-mode = true
 
  [tool.poetry.dependencies]
@@ -12,8 +12,6 @@
  aiogram = "^3.22.0"
  SQLAlchemy = "^2.0.40"
  alembic = "^1.17.2"
- pydantic = "^2.12.4"
- pydantic-settings = "^2.12.0"
  uvicorn = { extras = ["standard"], version = "^0.32.1" }
  redis = "^5.2.0"
  httpx = "^0.28.1"
@@ -25,3 +23,36 @@
  ruff = "^0.14.6"
  mypy = "^1.18.2"
  pre-commit = "^4.5.0"
+
+ [tool.black]
+line-length = 100
+target-version = ["py313"]
+
+ [tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B"]
+ignore = ["E203", "W503"]
+fixable = ["ALL"]
+unfixable = []
+
+ [tool.mypy]
+python_version = "3.13"
+strict = false
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_return_any = true
+check_untyped_defs = true
+plugins = []
+
+ [tool.pytest.ini_options]
+minversion = "9.0"
+addopts = "-q"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
+ [build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
