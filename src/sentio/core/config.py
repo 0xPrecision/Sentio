@@ -1,21 +1,52 @@
+from enum import StrEnum
+from functools import lru_cache
+
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+class Environment(StrEnum):
+    DEV = "dev"
+    PROD = "prod"
+    TEST = "test"
+
+
 class Settings(BaseSettings):
-    POSTGRES_HOST: str
-    POSTGRES_DB: str
-    POSTGRES_USER: str
-    POSTGRES_PASSWORD: str
-    DATABASE_URL: str
-    DATABASE_URL_SYNC: str
-    REDIS_URL: str
-    APP_ENV: str
+    model_config = SettingsConfigDict(
+        env_file=".env",
+    )
 
-    # @property
-    # def DATABASE_URL_asyncpg(self):
-    #     return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}"
+    app_env: Environment = Field(default=Environment.DEV)
+    log_level: str = Field(default="INFO")
+    debug: bool = Field(default=False)
 
-    model_config = SettingsConfigDict(env_file=".env")
+    postgres_user: str = Field(default="sentio")
+    postgres_password: str = Field(default="sentio")
+    postgres_host: str = Field(default="postgres")
+    postgres_port: int = Field(default=5432)
+    db_name: str = Field(default="sentio")
+
+    redis_url: str = Field(default="redis://redis:6379/0")
+
+    sqlalchemy_echo: bool = Field(default=False)
+
+    @property
+    def database_url(self) -> str:
+        return (
+            f"postgresql+asyncpg://"
+            f"{self.postgres_user}:{self.postgres_password}"
+            f"@{self.postgres_host}:{self.postgres_port}/{self.db_name}"
+        )
+
+    @property
+    def database_url_sync(self) -> str:
+        return (
+            f"postgresql://"
+            f"{self.postgres_user}:{self.postgres_password}"
+            f"@{self.postgres_host}:{self.postgres_port}/{self.db_name}"
+        )
 
 
-settings = Settings()
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()
