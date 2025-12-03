@@ -45,12 +45,15 @@ Sentio — это multi-tenant SaaS-система для онлайн-запи�
 
 - **Key fields:**
   - id
-  - timezone
   - name
-  - contact_email / phone
-  - created_at, updated_at
+  - contact_email
+  - phone (optional)
   - plan
+  - slug
+  - timezone
   - settings_json
+  - is_active (flag)
+  - created_at, updated_at
 
 - **Relations:**
   - has many TenantCustomers
@@ -71,7 +74,7 @@ Sentio — это multi-tenant SaaS-система для онлайн-запи�
   - name
   - address
   - description
-  - rating (производная метрика из отзывов)
+  - is_default
   - is_active (flag)
   - created_at, updated_at
   
@@ -79,6 +82,7 @@ Sentio — это multi-tenant SaaS-система для онлайн-запи�
   - belongs to Tenant
   - has many StaffMembers
   - has many TenantUsers (optional)
+  - has many Services (optional) 
   - has many Bookings (через StaffMembers)
 
 ### 3.3 User
@@ -110,7 +114,7 @@ Sentio — это multi-tenant SaaS-система для онлайн-запи�
   - tenant_id
   - location_id (optional)
   - user_id
-  - role (owner, admin, staff)
+  - role (owner, admin, manager, staff)
   - is_active (flag)
 
 - **Relations:**
@@ -126,8 +130,13 @@ Sentio — это multi-tenant SaaS-система для онлайн-запи�
 - **Key fields:**
   - id
   - tenant_id
-  - user_id
+  - user_id (optional)
+  - display_name
+  - bio (optional)
+  - color_hex (optional)
+  - location_id (optional)
   - is_active (flag)
+  - created_at, updated_at
   
 - **Relations:**
   - belongs to Tenant
@@ -135,6 +144,7 @@ Sentio — это multi-tenant SaaS-система для онлайн-запи�
   - belongs to User
   - has many WorkSchedules
   - has many Bookings
+  - has many TimeSlot
   - has many Services (many-to-many)
 
 ### 3.6 Service
@@ -145,10 +155,13 @@ Sentio — это multi-tenant SaaS-система для онлайн-запи�
 - **Key fields:**
   - id
   - tenant_id
-  - duration
-  - price
-  - description
-  - image_url
+  - name
+  - duration_minutes
+  - price_minor
+  - currency
+  - description (optional)
+  - image_url (optional)
+  - location_id (optional)
   - is_active (flag)
   - created_at, updated_at
 
@@ -158,7 +171,27 @@ Sentio — это multi-tenant SaaS-система для онлайн-запи�
   - has many StaffMembers (many-to-many)
   - has many Bookings
 
-### 3.7 Customer
+### 3.7 StaffService
+
+- **Description:**
+    Ассоциативная таблица для связи m2m между Service и StaffMember.
+
+- **Key fields:**
+  - id
+  - tenant_id
+  - staff_member_id
+  - service_id
+  - custom_price_minor (optional)
+  - custom_duration_minutes (optional)
+  - location_id (optional)
+  - is_featured (flag)
+  - created_at, updated_at
+
+- **Relations:**
+  - belongs to StaffMember
+  - belongs to Service
+
+### 3.8 Customer
 
 - **Description:**
     Конечный пользователь, который бронирует услуги с помощью Sentio.
@@ -167,7 +200,9 @@ Sentio — это multi-tenant SaaS-система для онлайн-запи�
   - id
   - telegram_id
   - phone (optional)
-  - full_name
+  - first_name
+  - last_name
+  - avatar_url (optional)
   - created_at, updated_at
   
 - **Relations:**
@@ -175,7 +210,7 @@ Sentio — это multi-tenant SaaS-система для онлайн-запи�
   - has many FavoriteLocations (через отдельные таблицы избранного)
   - has many TenantCustomers
 
-### 3.8 TenantCustomer
+### 3.9 TenantCustomer
 
 - **Description:**
     Конечный пользователь для конкретного Tenant, который бронирует услуги с помощью Sentio.
@@ -184,7 +219,9 @@ Sentio — это multi-tenant SaaS-система для онлайн-запи�
   - id
   - customer_id
   - tenant_id
-  - card_number (optional)
+  - payment_method_id
+  - card_last_4 (optional)
+  - card_brand
   - last_booking_status
   - late_cancellation (flag)
   - is_active (flag)
@@ -194,23 +231,25 @@ Sentio — это multi-tenant SaaS-система для онлайн-запи�
   - belongs to Tenant
   - belongs to Customer
 
-### 3.9 WorkSchedule
+### 3.10 WorkSchedule
 
 - **Description:**
     Рабочее расписание сотрудника бизнеса.
 
 - **Key fields:**
   - id
+  - tenant_id
   - staff_member_id
-  - date_range
-  - start_time
-  - end_time
-  
+  - work_date
+  - start_at
+  - end_at
+  - created_at, updated_at
+
 - **Relations:**
   - belongs to StaffMember
   - used to generate TimeSlots
 
-### 3.10 TimeSlot
+### 3.11 TimeSlot
 
 - **Description:**
     Конкретный промежуток времени, который может быть использован 
@@ -220,19 +259,18 @@ Sentio — это multi-tenant SaaS-система для онлайн-запи�
   - id
   - tenant_id
   - staff_member_id
-  - service_id
+  - work_schedule_id
   - start_time
   - end_time
-  - status (available / blocked)
+  - status (available / blocked / booked / expired)
   - created_at, updated_at
   
 - **Relations:**
-  - belongs to Tenant
+  - belongs to WorkSchedule
   - belongs to StaffMember
-  - belongs to Service
   - has zero or one Booking
 
-### 3.11 Booking
+### 3.12 Booking
 
 - **Description:**
     Резервация временного промежутка (time slot) конечным пользователем.
@@ -244,7 +282,7 @@ Sentio — это multi-tenant SaaS-система для онлайн-запи�
   - staff_member_id
   - service_id
   - timeslot_id
-  - status (confirmed / cancelled / no_show)
+  - booking_status (confirmed / cancelled / no_show / done / no_history)
   - created_at, updated_at
   
 - **Relations:**

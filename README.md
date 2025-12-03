@@ -70,7 +70,7 @@ The structure will evolve, but the core idea is to keep a clear separation betwe
 ```bash
 sentio/
   sentio/
-    api/        # FastAPI routers and API-related code
+    api/        # FastAPI routes and API-related code
     bot/        # aiogram bot logic
     core/       # settings, db, logging, application wiring
     models/     # SQLAlchemy models

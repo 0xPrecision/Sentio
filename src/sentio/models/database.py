@@ -1,7 +1,6 @@
-import enum
 from datetime import datetime
 
-from sqlalchemy import DateTime, func
+from sqlalchemy import DateTime, func, BigInteger, Boolean, ForeignKey
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -11,8 +10,7 @@ class Base(DeclarativeBase):
 
 
 class TimestampMixin:
-    """Стандартные поля id/created_at/updated_at для сущностей."""
-    id: Mapped[int] = mapped_column(primary_key=True)
+    """Стандартные поля created_at/updated_at для сущностей."""
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -25,12 +23,21 @@ class TimestampMixin:
         nullable=False
     )
 
-class BookingStatus(enum.StrEnum):
-    PENDING = "pending"
-    CONFIRMED = "confirmed"
-    CANCELLED = "cancelled"
-    NO_SHOW = "no_show"
 
-class TimeSlotStatus(enum.StrEnum):
-    AVAILABLE = "available"
-    BLOCKED = "blocked"
+class IDMixin:
+    """Стандартное поле id для сущностей."""
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+
+
+class ISActiveMixin:
+    """Стандартное поле is_active для сущностей."""
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+
+
+class TenantScopedMixin:
+    """Стандартное поле tenant_id для сущностей."""
+    tenant_id: Mapped[int] = mapped_column(
+        ForeignKey("tenants.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
