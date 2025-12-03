@@ -5,7 +5,7 @@ from sqlalchemy import Enum, ForeignKey, Date, DateTime, UniqueConstraint, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from sentio.models.database import Base, IDMixin, TimestampMixin, TenantScopedMixin
-from sentio.models.enums import TimeSlotStatus, BookingStatus
+from sentio.core.enums import TimeSlotStatus, BookingStatus
 
 if TYPE_CHECKING:
     from sentio.models.customer import Customer
@@ -42,7 +42,7 @@ class TimeSlot(Base, IDMixin, TenantScopedMixin, TimestampMixin):
     __table_args__ = (
         UniqueConstraint("tenant_id", "staff_member_id", "start_at", name="uq_slot_per_staff_start"),
         Index("ix_time_slots_tenant_start", "tenant_id", "start_at"),
-        CheckConstraint("end_at > start_at", name="ck_time_slots_positive_duration")
+        CheckConstraint("end_at > start_at", name="ck_time_slots_positive_duration"),
     )
 
     staff_member_id: Mapped[int] = mapped_column(
@@ -72,7 +72,7 @@ class TimeSlot(Base, IDMixin, TenantScopedMixin, TimestampMixin):
     staff_member: Mapped["StaffMember"] = relationship(
         back_populates="time_slots"
     )
-    booking: Mapped["Booking"] | None = relationship(
+    booking: Mapped["Booking"] = relationship(
         back_populates="time_slot",
         uselist=False
     )
@@ -94,7 +94,7 @@ class Booking(Base, IDMixin, TenantScopedMixin, TimestampMixin):
         nullable=False
     )
     timeslot_id: Mapped[int] = mapped_column(
-        ForeignKey("timeslots.id", ondelete="RESTRICT"),
+        ForeignKey("time_slots.id", ondelete="RESTRICT"),
         nullable=False
     )
     booking_status: Mapped[BookingStatus] = mapped_column(

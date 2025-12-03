@@ -1,14 +1,9 @@
-from enum import StrEnum
 from functools import lru_cache
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
-class Environment(StrEnum):
-    DEV = "dev"
-    PROD = "prod"
-    TEST = "test"
+from sentio.core.enums import Environment
 
 
 class Settings(BaseSettings):
@@ -41,7 +36,7 @@ class Settings(BaseSettings):
     @property
     def database_url_sync(self) -> str:
         return (
-            f"postgresql://"
+            f"postgresql+psycopg://"
             f"{self.postgres_user}:{self.postgres_password}"
             f"@{self.postgres_host}:{self.postgres_port}/{self.db_name}"
         )

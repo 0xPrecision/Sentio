@@ -4,7 +4,7 @@ from sqlalchemy import String, INTEGER, ForeignKey, Enum, BigInteger, UniqueCons
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from sentio.models.database import Base, IDMixin, ISActiveMixin, TenantScopedMixin, TimestampMixin
-from sentio.models.enums import TenantUserRole
+from sentio.core.enums import TenantUserRole
 
 if TYPE_CHECKING:
     from sentio.models.tenant import Tenant, Location
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 class User(Base, IDMixin, ISActiveMixin, TimestampMixin):
     __tablename__ = "users"
 
-    telegram_id: Mapped[int | None] = mapped_column(BigInteger, unique=True, index=True)
+    telegram_id: Mapped[int | None] = mapped_column(BigInteger, unique=True)
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
     phone: Mapped[str | None] = mapped_column(String(32))
     email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
@@ -37,7 +37,7 @@ class TenantUser(Base, IDMixin, TenantScopedMixin, ISActiveMixin, TimestampMixin
     )
 
     location_id: Mapped[int | None] = mapped_column(
-        INTEGER,
+        BigInteger,
         ForeignKey("locations.id", ondelete="SET NULL")
     )
     user_id: Mapped[int] = mapped_column(
@@ -53,4 +53,4 @@ class TenantUser(Base, IDMixin, TenantScopedMixin, ISActiveMixin, TimestampMixin
     # ----- Relations -----
     tenant: Mapped["Tenant"] = relationship(back_populates="tenant_users")
     user: Mapped["User"] = relationship(back_populates="tenant_users")
-    location: Mapped["Location"] | None = relationship(back_populates="tenant_users")
+    location: Mapped["Location"] = relationship(back_populates="tenant_users")

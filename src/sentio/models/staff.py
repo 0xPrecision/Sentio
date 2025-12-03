@@ -3,13 +3,12 @@ from typing import Annotated, TYPE_CHECKING
 from sqlalchemy import ForeignKey, INTEGER, String, UniqueConstraint, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from sentio.models.booking import TimeSlot
 from sentio.models.database import Base, ISActiveMixin, IDMixin, TenantScopedMixin, TimestampMixin
 
 if TYPE_CHECKING:
     from sentio.models.tenant import Tenant, Location
     from sentio.models.user import User
-    from sentio.models.booking import WorkSchedule, Booking
+    from sentio.models.booking import WorkSchedule, Booking, TimeSlot
 
 string_col = Annotated[str, mapped_column(String(255), nullable=False)]
 
@@ -31,10 +30,10 @@ class StaffMember(Base, IDMixin, TenantScopedMixin, ISActiveMixin, TimestampMixi
     tenant: Mapped["Tenant"] = relationship(
         back_populates="staff_members"
     )
-    location: Mapped["Location"] | None = relationship(
+    location: Mapped["Location"] = relationship(
         back_populates="staff_members"
     )
-    user: Mapped["User"] | None = relationship(
+    user: Mapped["User"] = relationship(
         back_populates="staff_members"
     )
     work_schedules: Mapped[list["WorkSchedule"]] = relationship(
@@ -75,10 +74,10 @@ class Service(Base, IDMixin, TenantScopedMixin, ISActiveMixin, TimestampMixin):
     tenant: Mapped["Tenant"] = relationship(
         back_populates="services"
     )
-    location: Mapped["Location"] | None = relationship(
+    location: Mapped["Location"] = relationship(
         back_populates="services"
     )
-    staff_members: Mapped["StaffMember"] | None = relationship(
+    staff_members: Mapped[list["StaffMember"]] = relationship(
         secondary="staff_services",
         back_populates="services",
         viewonly=True
@@ -96,13 +95,13 @@ class StaffService(Base, IDMixin, TenantScopedMixin, TimestampMixin):
     __tablename__ = "staff_services"
     __table_args__ = (
         UniqueConstraint("tenant_id", "staff_member_id", "service_id",
-                         name="uq_staff_service_per_tenant")
+                         name="uq_staff_service_per_tenant"),
     )
-    staff_member_id: Mapped["StaffMember"] = mapped_column(
+    staff_member_id: Mapped[int] = mapped_column(
         ForeignKey("staff_members.id", ondelete="CASCADE"),
         nullable=False
     )
-    service_id: Mapped["Service"] = mapped_column(
+    service_id: Mapped[int] = mapped_column(
         ForeignKey("services.id", ondelete="CASCADE"),
         nullable=False
     )

@@ -4,7 +4,7 @@ from sqlalchemy import BigInteger, String, Enum, ForeignKey, UniqueConstraint, B
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from sentio.models.database import Base, ISActiveMixin, IDMixin, TimestampMixin, TenantScopedMixin
-from sentio.models.enums import BookingStatus
+from sentio.core.enums import BookingStatus
 
 if TYPE_CHECKING:
     from sentio.models.booking import Booking
@@ -45,7 +45,8 @@ class TenantCustomer(Base, IDMixin, TenantScopedMixin, ISActiveMixin, TimestampM
     card_brand: Mapped[str | None] = mapped_column(String(32))
     last_booking_status: Mapped[BookingStatus] = mapped_column(
         Enum(BookingStatus, name="last_booking_status_enum"),
-        default=BookingStatus.NO_HISTORY
+        default=BookingStatus.NO_HISTORY,
+        nullable=False
     )
     late_cancellation: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
