@@ -1,15 +1,10 @@
 from logging.config import fileConfig
 
-from sqlalchemy import create_engine
-from sqlalchemy import pool
-
 from alembic import context
-
-from sentio.models.database import Base
-from sentio.models import booking, customer, staff, tenant, user
+from sqlalchemy import create_engine, pool
 
 from sentio.core.config import get_settings
-
+from sentio.models.database import Base
 
 settings = get_settings()
 config = context.config
@@ -18,6 +13,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 target_metadata = Base.metadata
+
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
@@ -38,7 +34,7 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
-        compare_server_default=True
+        compare_server_default=True,
     )
 
     with context.begin_transaction():
@@ -62,7 +58,7 @@ def run_migrations_online() -> None:
             connection=connection,
             target_metadata=target_metadata,
             compare_type=True,
-            compare_server_default=True
+            compare_server_default=True,
         )
 
         with context.begin_transaction():

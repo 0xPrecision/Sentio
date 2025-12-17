@@ -3,7 +3,7 @@ import enum
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from sentio.models.tenant import Tenant, Location
+from sentio.models.tenant import Location, Tenant
 from sentio.models.user import TenantUser
 from sentio.repositories.base import BaseRepository
 
@@ -24,8 +24,7 @@ class LocationRepository(BaseRepository[Location]):
 
     async def get_by_name(self, tenant_id: int, name: str) -> Location | None:
         stmt = select(Location).where(
-            Location.tenant_id == tenant_id,
-            Location.name == name.lower()
+            Location.tenant_id == tenant_id, Location.name == name.lower()
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
@@ -42,8 +41,7 @@ class TenantUserRepository(BaseRepository[TenantUser]):
 
     async def get_by_user(self, *, tenant_id: int, user_id: int) -> TenantUser | None:
         stmt = select(TenantUser).where(
-            TenantUser.tenant_id == tenant_id,
-            TenantUser.user_id == user_id
+            TenantUser.tenant_id == tenant_id, TenantUser.user_id == user_id
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
@@ -52,7 +50,7 @@ class TenantUserRepository(BaseRepository[TenantUser]):
         stmt = select(TenantUser).where(
             TenantUser.tenant_id == tenant_id,
             TenantUser.role == role,
-            TenantUser.is_active.is_(True)
+            TenantUser.is_active.is_(True),
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())

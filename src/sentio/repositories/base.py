@@ -11,8 +11,8 @@ class BaseRepository(Generic[ModelT]):
         self.session = session
         self.model = model
 
-    async def get(self, id_: int) -> ModelT | None:
-        stmt = select(self.model).where(self.model.id == id_)
+    async def get(self, obj_id: int) -> ModelT | None:
+        stmt = select(self.model).where(self.model.id == obj_id)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
@@ -25,5 +25,5 @@ class BaseRepository(Generic[ModelT]):
         self.session.add(obj)
         return obj
 
-    async def delete(self, obj: ModelT) -> ModelT:
+    async def delete(self, obj: ModelT) -> None:
         await self.session.delete(obj)

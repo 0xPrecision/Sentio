@@ -26,9 +26,11 @@ class TimeSlotStatus(enum.StrEnum):
     BOOKED = "BOOKED"
     EXPIRED = "EXPIRED"
 
+
 class BookingStatus(enum.StrEnum):
     CONFIRMED = "CONFIRMED"
     CANCELLED = "CANCELLED"
+    CANCELLED_LATE = "CANCELLED_LATE"
     NO_SHOW = "NO_SHOW"
     DONE = "DONE"
     NO_HISTORY = "NO_HISTORY"
