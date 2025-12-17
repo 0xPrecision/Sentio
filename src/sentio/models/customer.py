@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from sentio.models.booking import Booking
     from sentio.models.tenant import Tenant
 
+
 class Customer(Base, IDMixin, TimestampMixin):
     __tablename__ = "customers"
 
@@ -20,14 +21,10 @@ class Customer(Base, IDMixin, TimestampMixin):
     avatar_url: Mapped[str | None] = mapped_column(String(512))
 
     # ----- Relations -----
-    bookings: Mapped[list["Booking"]] = relationship(
-        back_populates="customer"
-    )
     tenant_customers: Mapped[list["TenantCustomer"]] = relationship(
-        back_populates="customer",
-        cascade="all, delete-orphan"
+        back_populates="customer", cascade="all, delete-orphan"
     )
-    #TODO favorite_locations через таблицы избранного
+    # TODO favorite_locations через таблицы избранного
 
 
 class TenantCustomer(Base, IDMixin, TenantScopedMixin, ISActiveMixin, TimestampMixin):
@@ -37,8 +34,7 @@ class TenantCustomer(Base, IDMixin, TenantScopedMixin, ISActiveMixin, TimestampM
     )
 
     customer_id: Mapped[int] = mapped_column(
-        ForeignKey("customers.id", ondelete="CASCADE"),
-        nullable=False
+        ForeignKey("customers.id", ondelete="CASCADE"), nullable=False
     )
     payment_method_id: Mapped[str | None] = mapped_column(String(128))
     card_last_4: Mapped[str | None] = mapped_column(String(4))
@@ -46,14 +42,11 @@ class TenantCustomer(Base, IDMixin, TenantScopedMixin, ISActiveMixin, TimestampM
     last_booking_status: Mapped[BookingStatus] = mapped_column(
         Enum(BookingStatus, name="last_booking_status_enum"),
         default=BookingStatus.NO_HISTORY,
-        nullable=False
+        nullable=False,
     )
     late_cancellation: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     # ----- Relations -----
-    tenant: Mapped["Tenant"] = relationship(
-        back_populates="tenant_customers"
-    )
-    customer: Mapped["Customer"] = relationship(
-        back_populates="tenant_customers"
-    )
+    bookings: Mapped[list["Booking"]] = relationship(back_populates="tenant_customer")
+    tenant: Mapped["Tenant"] = relationship(back_populates="tenant_customers")
+    customer: Mapped["Customer"] = relationship(back_populates="tenant_customers")

@@ -5,6 +5,7 @@ from pythonjsonlogger.json import jsonlogger
 
 from sentio.core.config import Settings
 
+
 class JsonFormatter(jsonlogger.JsonFormatter):
     pass
 
