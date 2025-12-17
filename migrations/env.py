@@ -1,15 +1,10 @@
 from logging.config import fileConfig
 
-from sqlalchemy import create_engine
-from sqlalchemy import pool
-
 from alembic import context
-
-from sentio.models.database import Base
-from sentio.models import booking, customer, staff, tenant, user
+from sqlalchemy import create_engine, pool
 
 from sentio.core.config import get_settings
-
+from sentio.models.database import Base
 
 settings = get_settings()
 config = context.config

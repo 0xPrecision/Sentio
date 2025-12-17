@@ -1,10 +1,10 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import BigInteger, String, Enum, ForeignKey, UniqueConstraint, Boolean
+from sqlalchemy import BigInteger, Boolean, Enum, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from sentio.models.database import Base, ISActiveMixin, IDMixin, TimestampMixin, TenantScopedMixin
 from sentio.core.enums import BookingStatus
+from sentio.models.database import Base, IDMixin, ISActiveMixin, TenantScopedMixin, TimestampMixin
 
 if TYPE_CHECKING:
     from sentio.models.booking import Booking

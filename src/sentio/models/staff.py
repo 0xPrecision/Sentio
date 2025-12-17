@@ -1,14 +1,14 @@
-from typing import Annotated, TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated
 
-from sqlalchemy import ForeignKey, INTEGER, String, UniqueConstraint, Boolean
+from sqlalchemy import INTEGER, Boolean, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from sentio.models.database import Base, ISActiveMixin, IDMixin, TenantScopedMixin, TimestampMixin
+from sentio.models.database import Base, IDMixin, ISActiveMixin, TenantScopedMixin, TimestampMixin
 
 if TYPE_CHECKING:
-    from sentio.models.tenant import Tenant, Location
+    from sentio.models.booking import Booking, TimeSlot, WorkSchedule
+    from sentio.models.tenant import Location, Tenant
     from sentio.models.user import User
-    from sentio.models.booking import WorkSchedule, Booking, TimeSlot
 
 string_col = Annotated[str, mapped_column(String(255), nullable=False)]
 
@@ -22,8 +22,7 @@ class StaffMember(Base, IDMixin, TenantScopedMixin, ISActiveMixin, TimestampMixi
     display_name: Mapped[string_col]
     bio: Mapped[str | None] = mapped_column(String(1024))
     color_hex: Mapped[str | None] = mapped_column(String(7))
-    location_id: Mapped[int | None] = mapped_column(
-        ForeignKey("locations.id", ondelete="SET NULL"))
+    location_id: Mapped[int | None] = mapped_column(ForeignKey("locations.id", ondelete="SET NULL"))
 
     # ----- Relations -----
     tenant: Mapped["Tenant"] = relationship(back_populates="staff_members")

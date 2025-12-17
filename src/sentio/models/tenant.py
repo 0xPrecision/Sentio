@@ -1,18 +1,17 @@
-from typing import Any, Annotated, TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated, Any
 
-from sqlalchemy import String, Enum, Boolean, text
+from sqlalchemy import Boolean, Enum, String, text
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, relationship
-from sqlalchemy.orm import mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from sentio.models.database import Base, ISActiveMixin, IDMixin, TimestampMixin, TenantScopedMixin
 from sentio.core.enums import TenantsPlan
+from sentio.models.database import Base, IDMixin, ISActiveMixin, TenantScopedMixin, TimestampMixin
 
 if TYPE_CHECKING:
-    from sentio.models.user import TenantUser
-    from sentio.models.customer import TenantCustomer
-    from sentio.models.staff import StaffMember, Service
     from sentio.models.booking import Booking
+    from sentio.models.customer import TenantCustomer
+    from sentio.models.staff import Service, StaffMember
+    from sentio.models.user import TenantUser
 
 string_col = Annotated[str, mapped_column(String(255), nullable=False)]
 

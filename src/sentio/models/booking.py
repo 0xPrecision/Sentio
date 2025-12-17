@@ -1,24 +1,24 @@
 from datetime import date, datetime, time
-from typing import Annotated, TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated
 
 from sqlalchemy import (
-    Enum,
-    ForeignKey,
+    CheckConstraint,
     Date,
     DateTime,
-    UniqueConstraint,
+    Enum,
+    ForeignKey,
     Index,
-    CheckConstraint,
     Time,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from sentio.models.database import Base, IDMixin, TimestampMixin, TenantScopedMixin
-from sentio.core.enums import TimeSlotStatus, BookingStatus
+from sentio.core.enums import BookingStatus, TimeSlotStatus
+from sentio.models.database import Base, IDMixin, TenantScopedMixin, TimestampMixin
 
 if TYPE_CHECKING:
     from sentio.models.customer import TenantCustomer
-    from sentio.models.staff import StaffMember, Service
+    from sentio.models.staff import Service, StaffMember
     from sentio.models.tenant import Tenant
 
 

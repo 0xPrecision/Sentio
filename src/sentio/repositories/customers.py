@@ -25,10 +25,7 @@ class TenantCustomerRepository(BaseRepository[TenantCustomer]):
         super().__init__(session, TenantCustomer)
 
     async def get_by_tenant_and_customer(
-            self,
-            *,
-            tenant_id: int,
-            customer_id: int
+        self, *, tenant_id: int, customer_id: int
     ) -> TenantCustomer | None:
         stmt = select(TenantCustomer).where(
             TenantCustomer.tenant_id == tenant_id,
@@ -38,9 +35,7 @@ class TenantCustomerRepository(BaseRepository[TenantCustomer]):
         return result.scalar_one_or_none()
 
     async def list_by_tenant(
-            self,
-            tenant_id: int,
-            active_only: bool = False
+        self, tenant_id: int, active_only: bool = False
     ) -> list[TenantCustomer]:
         stmt = select(TenantCustomer).where(TenantCustomer.tenant_id == tenant_id)
         if active_only:

@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String, ForeignKey, Enum, BigInteger, UniqueConstraint
+from sqlalchemy import BigInteger, Enum, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from sentio.models.database import Base, IDMixin, ISActiveMixin, TenantScopedMixin, TimestampMixin
 from sentio.core.enums import TenantUserRole
+from sentio.models.database import Base, IDMixin, ISActiveMixin, TenantScopedMixin, TimestampMixin
 
 if TYPE_CHECKING:
-    from sentio.models.tenant import Tenant, Location
     from sentio.models.staff import StaffMember
+    from sentio.models.tenant import Location, Tenant
 
 
 class User(Base, IDMixin, ISActiveMixin, TimestampMixin):

@@ -2,7 +2,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from sentio.models.customer import Customer, TenantCustomer
 from sentio.repositories.customers import CustomerRepository, TenantCustomerRepository
-from sentio.schemas.customer import CustomerCreate, CustomerUpdate, TenantCustomerCreate, TenantCustomerUpdatePayment
+from sentio.schemas.customer import (
+    CustomerCreate,
+    CustomerUpdate,
+    TenantCustomerCreate,
+    TenantCustomerUpdatePayment,
+)
 
 
 class CustomerService:
@@ -10,10 +15,7 @@ class CustomerService:
         self.session = session
         self.customers = CustomerRepository(session)
 
-    async def get_or_create_customer(
-            self,
-            data: CustomerCreate
-    ) -> Customer:
+    async def get_or_create_customer(self, data: CustomerCreate) -> Customer:
         async with self.session.begin():
             customer: Customer | None = None
 
@@ -24,9 +26,7 @@ class CustomerService:
 
             if customer is None:
                 create_data = data.model_dump()
-                customer = Customer(
-                    **create_data
-                )
+                customer = Customer(**create_data)
                 await self.customers.add(customer)
 
         return customer
@@ -37,11 +37,7 @@ class CustomerService:
     async def get_by_telegram_id(self, telegram_id: int) -> Customer | None:
         return await self.customers.get_by_telegram_id(telegram_id)
 
-    async def update_customer(
-            self,
-            customer: Customer,
-            data: CustomerUpdate
-    ) -> Customer:
+    async def update_customer(self, customer: Customer, data: CustomerUpdate) -> Customer:
         async with self.session.begin():
             update_data = data.model_dump(exclude_unset=True)
 
@@ -56,43 +52,32 @@ class TenantCustomerService:
         self.session = session
         self.tenant_customers = TenantCustomerRepository(session)
 
-    async def get_or_create_tenant_customer(
-            self,
-            data: TenantCustomerCreate
-    ) -> TenantCustomer:
+    async def get_or_create_tenant_customer(self, data: TenantCustomerCreate) -> TenantCustomer:
         async with self.session.begin():
             tenant_customer = await self.tenant_customers.get_by_tenant_and_customer(
-                tenant_id=data.tenant_id,
-                customer_id=data.customer_id
+                tenant_id=data.tenant_id, customer_id=data.customer_id
             )
             if tenant_customer is not None:
                 return tenant_customer
 
             create_data = data.model_dump()
-            tenant_customer = TenantCustomer(
-                **create_data
-            )
+            tenant_customer = TenantCustomer(**create_data)
             await self.tenant_customers.add(tenant_customer)
 
         return tenant_customer
 
     async def get_by_tenant_and_customer_id(
-            self,
-            tenant_id: int,
-            customer_id: int
+        self, tenant_id: int, customer_id: int
     ) -> TenantCustomer | None:
         return await self.tenant_customers.get_by_tenant_and_customer(
-            tenant_id=tenant_id,
-            customer_id=customer_id
+            tenant_id=tenant_id, customer_id=customer_id
         )
 
     async def list_by_tenant(self, tenant_id: int) -> list[TenantCustomer]:
         return await self.tenant_customers.list_by_tenant(tenant_id)
 
     async def update_tenant_customer_payment(
-            self,
-            tenant_customer: TenantCustomer,
-            data: TenantCustomerUpdatePayment
+        self, tenant_customer: TenantCustomer, data: TenantCustomerUpdatePayment
     ) -> TenantCustomer:
         async with self.session.begin():
             update_data = data.model_dump()

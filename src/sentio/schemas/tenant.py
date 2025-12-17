@@ -1,4 +1,5 @@
 from typing import Any
+
 from pydantic import BaseModel, EmailStr, Field
 
 from sentio.core.enums import TenantsPlan, TenantUserRole
@@ -15,6 +16,7 @@ class TenantBase(BaseModel):
 
 class TenantCreateWithLocation(TenantBase):
     """Создание тенанта с дефолтной локацией"""
+
     default_location_name: str
     address: str
     description: str | None = None
@@ -22,10 +24,11 @@ class TenantCreateWithLocation(TenantBase):
 
 class TenantUpdate(BaseModel):
     """Класс для обновления полей тенанта"""
+
     name: str | None = None
     contact_email: EmailStr | None = None
     phone: str | None = None
-    plan: TenantsPlan | None= None
+    plan: TenantsPlan | None = None
     slug: str | None = None
     settings: dict[str, Any] | None = None
     is_active: bool | None = None
