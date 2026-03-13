@@ -1,167 +1,305 @@
 # Sentio
 
-Sentio is a SaaS booking platform with a Telegram bot interface for service-based businesses (e.g. barbershops, salons, studios).  
-The goal is to provide a simple, flexible way for owners to manage time slots, staff schedules, and client bookings, while clients can book and manage their appointments directly in Telegram.
+> **Sentio** — backend-проект для SaaS-платформы онлайн-записи в сфере услуг. В репозитории реализованы предметная модель для салонов и студий, HTTP API на FastAPI, слой сервисов и репозиториев, работа с PostgreSQL и бизнес-логика бронирования, отмен и расписаний. Проект находится в активной разработке и представлен как сильная портфельная работа с архитектурой, приближённой к реальным production-подходам.
 
-> Status: early development. The project is being built as a production-like training project using a modern Python backend stack.
+## Обзор
 
----
+**Sentio** разрабатывается как SaaS-платформа для онлайн-записи в сфере услуг: барбершопов, салонов, студий и других сервисных бизнесов. В основе проекта лежит multi-tenant архитектура, где каждый бизнес изолирован в рамках собственной сущности со своими данными, пользователями и бизнес-объектами.
 
-## Features (planned)
+Текущая версия репозитория сосредоточена на backend-ядре системы: предметной модели, миграциях, API, репозиториях и сервисах с бизнес-логикой. Telegram-бот рассматривается как один из основных клиентских интерфейсов, но в данной ветке его реализация пока не завершена.
 
-- **Multi-tenant booking system**
-  - Separate workspaces for different businesses
-  - Staff, services, and schedules per organization
+С практической точки зрения проект ценен тем, что показывает не просто набор CRUD-операций, а более зрелый подход к разработке серверной части: с tenant isolation, ролями доступа, сотрудниками, услугами, расписаниями, временными слотами, бронированиями и бизнес-валидациями.
 
-- **Time slots & scheduling**
-  - Configurable working hours and breaks
-  - Time slot generation per staff member
-  - Basic conflict detection for bookings
+## Возможности
 
-- **Telegram bot for clients**
-  - Browse available services and time slots
-  - Create, reschedule, and cancel bookings
-  - Reminders and notifications via Telegram
+### Что уже реализовано
 
-- **Admin API / panel**
-  - Manage organizations, staff, services, schedules
-  - View and manage bookings
-  - Authentication & basic access control (planned)
+- многоклиентская предметная модель с сущностями: `Tenant`, `Location`, `User`, `TenantUser`, `StaffMember`, `Service`, `StaffService`, `Customer`, `TenantCustomer`, `WorkSchedule`, `TimeSlot`, `Booking`;
+- ролевой доступ через Bearer JWT и определение tenant-контекста через заголовок `X-Tenant-Slug`;
+- FastAPI-модули для работы с бронированиями, услугами, сотрудниками, расписаниями и временными слотами;
+- сервисный слой с ключевой бизнес-логикой:
+  - создание бронирования с блокировкой временного слота через `SELECT ... FOR UPDATE`,
+  - проверка связи между сотрудником и услугой,
+  - отмена записи с различными сценариями статусов,
+  - перенос бронирования,
+  - валидация расписаний и временных слотов;
+- конфигурация Alembic и миграции базы данных;
+- локальная инфраструктура для PostgreSQL через Docker Compose включая отдельную конфигурацию для тестов;
+- базовые модульные тесты для служебной бизнес-логики штрафов и расчёта времени до начала записи.
 
-- **Background processing (planned)**
-  - Reminders
-  - Cleanup tasks
-  - Periodic maintenance jobs
+### Что находится в разработке
 
----
+- общий API-маршрутизатор пока подключает только модуль `bookings` (остальные маршруты уже реализованы, но ещё не включены в итоговую сборку приложения);
+- Telegram-бот заявлен как один из пользовательских интерфейсов, но в текущей версии проекта представлен только каркасом;
+- API для работы с tenant-сущностями и организационной частью системы ещё не завершено;
+- фоновые задачи, уведомления, Redis-сценарии и полноценный production-контур пока находятся в стадии дальнейшей реализации.
 
-## Tech stack
+## Технологии
 
-**Backend & API**
+### В проекте используется современный Python backend-стек, ориентированный на разработку прикладных веб-сервисов:
+- **Python 3.13**
+- **FastAPI** для реализации HTTP API
+- **SQLAlchemy 2.x** для ORM и асинхронной работы с базой данных
+- **Alembic** для миграций
+- **PostgreSQL** как основная база данных
+- **aiogram 3.x** как база для Telegram-части проекта
+- **Redis** как подготовленная инфраструктурная зависимость
+- **httpx** для исходящих HTTP-запросов
+- **pydantic-settings** для управления конфигурацией
+- **python-json-logger** для структурированного логирования
+- **psycopg** для синхронного подключения в миграциях
+- **python-jose** для работы с JWT
+- **pytest / pytest-asyncio** для тестирования
+- **black / ruff / mypy / pre-commit** для поддержки качества кода
 
-- Python 3.13
-- FastAPI (HTTP API, OpenAPI, dependency injection)
-- SQLAlchemy 2.x (async ORM / Core)
-- Alembic (database migrations)
-- PostgreSQL (main database)
-- Redis (cache, locks, state)
+## Архитектура
 
-**Telegram bot**
+### Проект построен по многослойной архитектуре с разделением ответственности между основными частями приложения:
 
-- aiogram 3.x (async Telegram bot framework)
-- Integration with the HTTP API instead of direct DB access
+- **API-слой**: отвечает за маршруты FastAPI, зависимости и обработку исключений;
+- **Слой схем**: содержит Pydantic-модели для входных и выходных данных;
+- **Cервисный слой**: реализует бизнес-логику и сценарии использования;
+- **Слой репозиториев**: инкапсулирует доступ к данным через SQLAlchemy;
+- **Слой моделей**: описывает ORM-сущности и связи между ними;
+- **Базовый слой**: включает конфигурацию, работу с базой данных, перечисления, исключения и логирование.
 
-**Infrastructure & tooling**
+Отдельно стоит отметить multi-tenant подход. Доступ к данным и операциям привязан к `tenant_id`, ролям пользователей внутри tenant-контекста и заголовку `X-Tenant-Slug`. При этом ключевая логика, связанная с бронированиями, временными слотами и валидациями, сосредоточена в сервисном слое, а не вынесена в маршруты или смешана с кодом доступа к данным.
 
-- Poetry (dependency & environment management)
-- Docker / Docker Compose (services orchestration)
-- pytest, pytest-asyncio (testing)
-- httpx (HTTP client)
-- black, ruff, mypy, pre-commit (code quality & linting)
+Такой подход делает проект более поддерживаемым, упрощает развитие бизнес-логики и делает архитектуру ближе к тому, что обычно ожидается от backend-решений в коммерческой разработке.
 
-CI/CD and additional tools will be added later as the project grows.
+## Структура проекта
 
----
+<details>
+<summary>Раскрыть дерево проекта</summary>
 
-## Project structure (planned)
-
-The structure will evolve, but the core idea is to keep a clear separation between API, bot, domain logic, and infrastructure:
-
-```bash
-sentio/
-  sentio/
-    api/        # FastAPI routes and API-related code
-    bot/        # aiogram bot logic
-    core/       # settings, db, logging, application wiring
-    models/     # SQLAlchemy models
-    schemas/    # Pydantic schemas
-    services/   # domain services/use-cases (booking, scheduling, etc.)
-    workers/    # background tasks (Celery/RQ, if used)
-  tests/        # unit and integration tests
-  docker/       # Dockerfiles, compose configs (planned)
-  docs/         # documentation, design notes, task specs
-  pyproject.toml
-  README.md
 ```
+Sentio/
+├── docs/
+│   └── domain_model.md
+├── migrations/
+│   ├── env.py
+│   └── versions/
+├── src/
+│   └── sentio/
+│       ├── api/
+│       │   ├── deps.py
+│       │   ├── exception_handlers.py
+│       │   ├── main.py
+│       │   ├── router.py
+│       │   └── routes/
+│       │       ├── bookings.py
+│       │       ├── services.py
+│       │       ├── staff.py
+│       │       ├── tenants.py
+│       │       ├── time_slots.py
+│       │       └── work_schedules.py
+│       ├── bot/
+│       │   └── middlewares/
+│       ├── core/
+│       │   ├── config.py
+│       │   ├── db.py
+│       │   ├── enums.py
+│       │   ├── exceptions.py
+│       │   └── logging.py
+│       ├── models/
+│       ├── repositories/
+│       ├── schemas/
+│       └── services/
+├── tests/
+│   ├── services/
+│   │   └── test_booking_service.py
+│   └── unit/
+│       └── test_booking_utils.py
+├── alembic.ini
+├── docker-compose.test.yml
+├── docker-compose.yml
+└── pyproject.toml
+```
+</details>
 
-This layout may change as the domain model and requirements become clearer.
+## Установка
 
----
-
-## Getting started
-
-### Prerequisites
-
-- Python 3.13
-- Poetry installed (`pip install poetry`)
-- Docker & Docker Compose (for running Postgres/Redis, later)
-
-### Install dependencies
-
-From the project root:
+Установка зависимостей выполняется через Poetry:
 
 ```bash
 poetry install
 ```
 
-This will:
-
-- create a virtual environment (if not present),
-- install all runtime and development dependencies defined in `pyproject.toml`.
-
-Activate the environment:
+Локальную PostgreSQL-базу можно поднять через Docker Compose:
 
 ```bash
-poetry shell
+docker compose up -d
 ```
 
-### Run basic checks
-
-Once dependencies are installed, you can run:
+Для тестовой базы предусмотрен отдельный compose-файл:
 
 ```bash
-# Run tests
-poetry run pytest
+docker compose -f docker-compose.test.yml up -d
+```
 
-# Lint and format checks
+## Настройка
+
+В репозитории нет готового `.env.example`, поэтому пример переменных окружения ниже составлен на основе текущей конфигурации проекта в `core/config.py`.
+
+```env
+JWT_SECRET=change_me
+JWT_ALG=HS256
+
+APP_ENV=dev
+LOG_LEVEL=INFO
+DEBUG=false
+
+POSTGRES_USER=sentio
+POSTGRES_PASSWORD=sentio
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+DB_NAME=sentio
+
+REDIS_URL=redis://redis:6379/0
+SQLALCHEMY_ECHO=false
+```
+
+## Запуск проекта
+
+После установки зависимостей и настройки переменных окружения проект можно запускать локально.
+
+### Запуск API
+
+Точка входа приложения находится в `sentio.api.main:app`:
+
+```bash
+poetry run uvicorn sentio.api.main:app --reload
+```
+
+### Применение миграций
+
+Перед запуском рекомендуется применить миграции базы данных:
+
+```bash
+poetry run alembic upgrade head
+```
+
+### Проверка качества кода
+
+Для запуска тестов и базовых проверок качества кода можно использовать следующие команды:
+
+```bash
+poetry run pytest
 poetry run ruff check .
 poetry run black --check .
 poetry run mypy
 ```
 
-These commands will be refined as the project structure and tooling configuration mature.
+## Примеры использования
 
----
+Ниже приведён базовый сценарий работы с текущей серверной частью проекта.
 
-## Roadmap (high level)
+### Типовой сценарий
 
-1. **Core infrastructure**
-   - Project layout
-   - Config, logging, DB setup, migrations
+В рамках реализованной логики работа с системой строится примерно так:
 
-2. **Domain model**
-   - Organizations, staff, services
-   - Schedules and time slots
-   - Bookings
+1. создаётся сотрудник;
+2. создаётся услуга;
+3. услуга привязывается к сотруднику;
+4. на выбранную дату создаётся рабочее расписание;
+5. внутри расписания создаются временные слоты;
+6. на свободный слот оформляется бронирование;
+7. при необходимости бронирование можно отменить или перенести.
 
-3. **HTTP API**
-   - Basic CRUD endpoints for the core entities
-   - Booking creation and validation
+### Пример HTTP-запроса на создание бронирования
 
-4. **Telegram bot**
-   - Basic flow: select service → select time slot → confirm booking
-   - Booking management (view/cancel)
+```bash
+curl -X POST "http://localhost:8000/api/bookings/" \
+  -H "Authorization: Bearer <JWT_TOKEN>" \
+  -H "X-Tenant-Slug: demo-tenant" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tenant_customer_id": 1,
+    "staff_member_id": 10,
+    "service_id": 5,
+    "time_slot_id": 42
+  }'
+```
 
-5. **Background tasks**
-   - Reminders & cleanup jobs
+### Пример отмены бронирования
 
-6. **Operational tooling**
-   - Docker setup
-   - CI (tests + linters)
+```bash
+curl -X PATCH "http://localhost:8000/api/bookings/42/cancel" \
+  -H "Authorization: Bearer <JWT_TOKEN>" \
+  -H "X-Tenant-Slug: demo-tenant"
+```
 
----
+### Текущее ограничение
 
-## License
+На текущем этапе в основном маршрутизаторе приложения подключён только модуль `bookings`. Остальные модули, включая `services`, `staff`, `work-schedules` и `time-slots` уже присутствуют в кодовой базе, но пока не включены в итоговую сборку приложения.
 
-Currently not specified.  
-The license will be added once the project is closer to a stable state.
+## База данных
+
+Проект использует PostgreSQL в качестве основной базы данных и SQLAlchemy как ORM-слой для работы с моделями и связями между сущностями.
+
+Структура данных построена вокруг предметной области сервиса онлайн-записи и включает связанные между собой сущности для работы с организациями, пользователями, сотрудниками, услугами, расписаниями, временными слотами и бронированиями. В модели также заложены PostgreSQL-специфичные возможности, включая JSONB, перечисления, ограничения уникальности и индексы.
+
+Для приложения используется асинхронное подключение к базе данных, а для миграций через Alembic формируется отдельный синхронный URL.
+
+Основные сущности:
+
+- tenants и locations
+- platform users и tenant users
+- staff members и services
+- customers и tenant customers
+- work schedules
+- time slots
+- bookings
+
+## Интеграции
+
+На текущем этапе в проекте уже присутствуют базовые инфраструктурные и прикладные интеграции, а часть компонентов пока подготовлена только на уровне архитектуры и конфигурации.
+
+### Реализовано
+
+- **PostgreSQL** используется как основная база данных;
+- **JWT-аутентификация** реализована через `python-jose`;
+- **структурированное логирование** настроено через `python-json-logger`.
+
+### Подготовлено в архитектуре проекта
+
+- **Telegram-бот** как один из основных клиентских интерфейсов;
+- **Redis** предусмотрен в конфигурации проекта;
+- **уведомления и фоновые задачи** заложены как часть дальнейшего развития системы.
+
+### Пока нет в текущем коде
+
+- платёжных интеграций;
+- AI/LLM-интеграций;
+- отдельной панели администратора или интерфейса управления.
+
+## Развёртывание
+
+На текущем этапе в репозитории подготовлена локальная инфраструктура для работы с PostgreSQL через Docker Compose, а также отдельная конфигурация для тестовой базы данных. Полноценный production-контур развёртывания в проекте пока не реализован: в репозитории отсутствует Dockerfile для приложения, не настроен отдельный сервис для запуска backend-а в Compose и не представлены CI/CD-процессы.
+
+Такое состояние соответствует текущему этапу проекта: основное внимание сосредоточено на разработке серверной логики и архитектуры.
+
+## Ограничения
+
+На текущем этапе важно учитывать несколько моментов:
+- проект всё ещё находится в активной разработке;
+- Telegram-бот пока не реализован как полноценный пользовательский интерфейс;
+- часть API ещё не доведена до завершённого состояния;
+- тестовое покрытие пока ограничено и не охватывает всю сервисную логику;
+- в кодовой базе остаются отдельные места, которые требуют технической доработки перед полноценным запуском.
+- конфигурация зависимостей требует доработки перед полноценным запуском среды
+
+## Дальнейшее развитие
+
+Следующие логичные шаги для проекта:
+- завершить tenant-логику и связанные сценарии аутентификации;
+- реализовать полноценный слой Telegram-бота;
+- добавить Redis в локальную инфраструктуру и довести фоновые задачи до рабочего состояния;
+- подготовить Dockerfile и контейнеризацию приложения;
+- настроить CI/CD
+- расширить тесты до сервисных и интеграционных сценариев;
+- довести операции переноса бронирования до полностью атомарного поведения.
+
+## Итог
+
+Sentio стоит воспринимать как сильный backend-проект в активной разработке. Уже сейчас в нём есть то, что действительно важно для портфолио: продуманная предметная модель, сервисный слой, multi-tenant архитектура, роли доступа, миграции, работа с PostgreSQL и прикладная логика вокруг бронирований и расписаний.
