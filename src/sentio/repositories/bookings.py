@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,12 +6,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sentio.core.enums import BookingStatus, TimeSlotStatus
 from sentio.models.booking import Booking, TimeSlot, WorkSchedule
 from sentio.repositories.base import BaseRepository
-from sentio.services.exceptions import TimeSlotNotFoundError
 
 
 class WorkScheduleRepository(BaseRepository[WorkSchedule]):
     def __init__(self, session: AsyncSession) -> None:
         super().__init__(session, WorkSchedule)
+
+    async def get_by_id_for_tenant(self, tenant_id: int, schedule_id: int) -> WorkSchedule | None:
+        stmt = select(WorkSchedule).where(
+            WorkSchedule.id == schedule_id, WorkSchedule.tenant_id == tenant_id
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
 
     async def get_by_staff_and_date(
         self, *, staff_member_id: int, tenant_id: int, work_date: date
@@ -40,18 +46,10 @@ class TimeSlotRepository(BaseRepository[TimeSlot]):
         )
         result = await self.session.execute(stmt)
         slot = result.scalar_one_or_none()
-        if slot is None:
-            raise TimeSlotNotFoundError(tenant_id=tenant_id, time_slot_id=time_slot_id)
         return slot
 
-    async def get_by_work_ids_and_time(
-        self, *, staff_member_id: int, tenant_id: int, start_at: datetime
-    ) -> TimeSlot | None:
-        stmt = select(TimeSlot).where(
-            TimeSlot.staff_member_id == staff_member_id,
-            TimeSlot.tenant_id == tenant_id,
-            TimeSlot.start_at == start_at,
-        )
+    async def get_by_id_for_tenant(self, *, tenant_id: int, time_slot_id: int) -> TimeSlot | None:
+        stmt = select(TimeSlot).where(TimeSlot.tenant_id == tenant_id, TimeSlot.id == time_slot_id)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
@@ -65,6 +63,11 @@ class BookingRepository(BaseRepository[Booking]):
     def __init__(self, session: AsyncSession) -> None:
         super().__init__(session, Booking)
 
+    async def get_by_id_for_tenant(self, booking_id: int, tenant_id: int) -> Booking:
+        stmt = select(Booking).where(Booking.tenant_id == tenant_id, Booking.id == booking_id)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
     async def get_by_work_ids(
         self,
         *,
@@ -75,7 +78,7 @@ class BookingRepository(BaseRepository[Booking]):
         tenant_id: int,
     ) -> Booking | None:
         stmt = select(Booking).where(
-            Booking.customer_id == customer_id,
+            Booking.tenant_customer_id == customer_id,
             Booking.staff_member_id == staff_member_id,
             Booking.service_id == service_id,
             Booking.time_slot_id == time_slot_id,

@@ -1,105 +1,22 @@
-from datetime import date
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sentio.core.enums import BookingStatus, TimeSlotStatus
-from sentio.models.booking import Booking, TimeSlot, WorkSchedule
+from sentio.core.exceptions import NotFoundError
+from sentio.models.booking import Booking
 from sentio.repositories.bookings import (
     BookingRepository,
     TimeSlotRepository,
-    WorkScheduleRepository,
 )
-from sentio.schemas.booking import (
-    BookingCreate,
-    TimeSlotCreate,
-    WorkScheduleCreate,
-    WorkScheduleUpdate,
-)
+from sentio.repositories.customers import TenantCustomerRepository
+from sentio.repositories.services import ServiceRepository
+from sentio.repositories.staff import StaffMemberRepository, StaffServiceRepository
+from sentio.schemas.booking import BookingCreate, BookingReschedule
 from sentio.services.exceptions import (
     BookingStatusError,
-    DateValidationError,
     SlotNotAvailableError,
+    TimeSlotNotFoundError,
 )
 from sentio.services.utils import check_customer_last_booking_status, check_time_to_start
-
-
-class WorkScheduleService:
-    """Сервисный класс для изменения рабочего расписания мастера на один день"""
-
-    def __init__(self, session: AsyncSession) -> None:
-        self.session = session
-        self.work_schedules = WorkScheduleRepository(session)
-
-    async def get_or_create_work_schedule(self, data: WorkScheduleCreate) -> WorkSchedule:
-        """Функция для получения или создания рабочего расписания"""
-        if data.work_date < date.today():
-            raise DateValidationError
-
-        async with self.session.begin():
-            work_schedule = await self.work_schedules.get_by_staff_and_date(
-                staff_member_id=data.staff_member_id,
-                tenant_id=data.tenant_id,
-                work_date=data.work_date,
-            )
-            if work_schedule is not None:
-                return work_schedule
-
-            create_data = data.model_dump()
-            work_schedule = WorkSchedule(**create_data)
-            await self.work_schedules.add(work_schedule)
-
-        return work_schedule
-
-    async def update_work_schedule(
-        self,
-        work_schedule: WorkSchedule,
-        data: WorkScheduleUpdate,
-    ) -> WorkSchedule:
-        """Функция для изменения рабочего расписания"""
-        if data.work_date is not None and data.work_date < date.today():
-            raise DateValidationError
-
-        async with self.session.begin():
-            update_data = data.model_dump(exclude_unset=True)
-
-            for field, value in update_data.items():
-                setattr(work_schedule, field, value)
-
-            return work_schedule
-
-
-class TimeSlotService:
-    """Сервисный класс для взаимодействия с тайм-слотом"""
-
-    def __init__(self, session: AsyncSession) -> None:
-        self.session = session
-        self.time_slots = TimeSlotRepository(session)
-
-    async def get_or_create_available_slot(self, data: TimeSlotCreate) -> TimeSlot:
-        """Получить или создать тайм-слот"""
-        async with self.session.begin():
-            time_slot = await self.time_slots.get_by_work_ids_and_time(
-                staff_member_id=data.staff_member_id,
-                tenant_id=data.tenant_id,
-                start_at=data.start_at,
-            )
-            if time_slot is not None:
-                if time_slot.status == TimeSlotStatus.AVAILABLE:
-                    return time_slot
-                else:
-                    raise SlotNotAvailableError
-
-            create_data = data.model_dump()
-            time_slot = TimeSlot(
-                **create_data,
-            )
-            await self.time_slots.add(time_slot)
-
-        return time_slot
-
-    async def list_by_status(self, status: TimeSlotStatus, tenant_id: int) -> list[TimeSlot]:
-        """Получить список тайм-слотов с определённым статусом"""
-        return await self.time_slots.list_by_status(status, tenant_id)
 
 
 class BookingService:
@@ -108,21 +25,63 @@ class BookingService:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
         self.bookings = BookingRepository(session)
-        self.time_slots = TimeSlotRepository(session)
+        self.tenant_customer = TenantCustomerRepository(session)
+        self.service = ServiceRepository(session)
+        self.staff_member = StaffMemberRepository(session)
+        self.staff_services = StaffServiceRepository(session)
+        self.time_slot = TimeSlotRepository(session)
 
-    async def create_booking(self, data: BookingCreate) -> Booking:
+    async def _validate_ids_for_create(self, tenant_id: int, data: BookingCreate):
+        tenant_customer = await self.tenant_customer.get(data.tenant_customer_id)
+        if tenant_customer is None or tenant_customer.tenant_id != tenant_id:
+            raise NotFoundError("Tenant customer is not found")
+
+        service = await self.service.get(data.service_id)
+        if service is None or service.tenant_id != tenant_id:
+            raise NotFoundError("Service is not found")
+
+        staff_member = await self.staff_member.get(data.staff_member_id)
+        if staff_member is None or staff_member.tenant_id != tenant_id:
+            raise NotFoundError("Staff member is not found")
+
+        relation = await self.staff_services.get_by_keys(
+            tenant_id=tenant_id, staff_member_id=data.staff_member_id, service_id=data.service_id
+        )
+        if relation is None:
+            raise NotFoundError("Service is not available for this staff member")
+
+    async def get_by_id_for_tenant(self, tenant_id: int, booking_id: int) -> Booking:
+        booking = await self.bookings.get_by_id_for_tenant(
+            tenant_id=tenant_id, booking_id=booking_id
+        )
+        if booking is None:
+            raise NotFoundError("Booking not found")
+        return booking
+
+    async def create_booking(
+        self, tenant_id: int, data: BookingCreate | BookingReschedule
+    ) -> Booking:
         """Создать бронирование"""
+        await self._validate_ids_for_create(tenant_id, data)
+
         async with self.session.begin():
-            slot = await self.time_slots.get_for_update(
-                tenant_id=data.tenant_id, time_slot_id=data.time_slot_id
+            slot = await self.time_slot.get_for_update(
+                tenant_id=tenant_id, time_slot_id=data.time_slot_id
             )
-            if slot.status != TimeSlotStatus.AVAILABLE:
+
+            if slot is None or slot.tenant_id != tenant_id:
+                raise NotFoundError("Time slot not found")
+            elif slot.staff_member_id != data.staff_member_id:
+                raise TimeSlotNotFoundError
+            elif slot.status != TimeSlotStatus.AVAILABLE:
                 raise SlotNotAvailableError
 
             slot.status = TimeSlotStatus.BOOKED
 
             create_data = data.model_dump()
-            booking = Booking(**create_data, booking_status=BookingStatus.CONFIRMED)
+            booking = Booking(
+                tenant_id=tenant_id, **create_data, booking_status=BookingStatus.CONFIRMED
+            )
             await self.bookings.add(booking)
 
         return booking
@@ -133,9 +92,16 @@ class BookingService:
 
     async def cancel_booking(
         self,
-        booking_obj: Booking,
+        tenant_id: int,
+        booking_id: int,
     ) -> Booking:
         """Отменить бронирование"""
+        booking_obj = await self.bookings.get_by_id_for_tenant(
+            tenant_id=tenant_id, booking_id=booking_id
+        )
+        if booking_obj is None:
+            raise NotFoundError("Booking not found")
+
         if booking_obj.booking_status != BookingStatus.CONFIRMED:
             raise BookingStatusError
 
@@ -159,10 +125,17 @@ class BookingService:
 
         return booking_obj
 
-    async def reschedule_booking(self, booking: Booking, data: BookingCreate) -> Booking:
+    async def reschedule_booking_for_customer(
+        self, tenant_id: int, booking_id: int, data: BookingReschedule
+    ) -> Booking:
         """Перенести бронирование"""
+        # TODO сделать атомарной
+        booking = await self.bookings.get_by_id_for_tenant(
+            tenant_id=tenant_id, booking_id=booking_id
+        )
+
         if booking.booking_status != BookingStatus.CONFIRMED:
             raise BookingStatusError
 
-        await self.cancel_booking(booking)
-        return await self.create_booking(data)
+        await self.cancel_booking(tenant_id=tenant_id, booking_id=booking_id)
+        return await self.create_booking(tenant_id=tenant_id, data=data)
