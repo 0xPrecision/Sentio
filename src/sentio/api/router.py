@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from sentio.api.routes.health import router as health_router
+from sentio.api.routes.bookings import router as health_router
 
 api_router = APIRouter()
 

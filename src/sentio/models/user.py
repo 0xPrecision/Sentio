@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import BigInteger, Enum, ForeignKey, String, UniqueConstraint
+from sqlalchemy import BigInteger, Enum, ForeignKey, String, UniqueConstraint, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from sentio.core.enums import TenantUserRole
@@ -19,6 +19,7 @@ class User(Base, IDMixin, ISActiveMixin, TimestampMixin):
     phone: Mapped[str | None] = mapped_column(String(32))
     email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     avatar_url: Mapped[str | None] = mapped_column(String(512))
+    is_platform_admin: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
 
     # ----- Relations -----
     tenant_users: Mapped[list["TenantUser"]] = relationship(

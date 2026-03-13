@@ -11,6 +11,8 @@ class Settings(BaseSettings):
         env_file=".env",
     )
 
+    JWT_SECRET: str
+    JWT_ALG: str = "HS256"
     app_env: Environment = Field(default=Environment.DEV)
     log_level: str = Field(default="INFO")
     debug: bool = Field(default=False)

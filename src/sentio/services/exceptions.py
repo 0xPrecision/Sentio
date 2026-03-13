@@ -9,6 +9,10 @@ class BookingStatusError(BookingError):
     pass
 
 
+class TimeValidationError(BookingError):
+    pass
+
+
 class DateValidationError(BookingError):
     pass
 

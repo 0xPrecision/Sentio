@@ -82,8 +82,7 @@ Sentio — это multi-tenant SaaS-система для онлайн-запи�
   - belongs to Tenant
   - has many StaffMembers
   - has many TenantUsers (optional)
-  - has many Services (optional) 
-  - has many Bookings (через StaffMembers)
+  - has many Services (optional)
 
 ### 3.3 User
 
@@ -97,6 +96,7 @@ Sentio — это multi-tenant SaaS-система для онлайн-запи�
   - phone (optional)
   - email
   - avatar_url
+  - is_platform_admin (flag)
   - is_active (flag)
   - created_at, updated_at
 
@@ -129,6 +129,7 @@ Sentio — это multi-tenant SaaS-система для онлайн-запи�
 
 - **Key fields:**
   - id
+  - tenant_id
   - user_id (optional)
   - display_name
   - bio (optional)
@@ -168,6 +169,7 @@ Sentio — это multi-tenant SaaS-система для онлайн-запи�
   - belongs to Tenant
   - optionally belongs to Location (если услуги отличаются в зависимости от локации)
   - has many StaffMembers (many-to-many)
+  - has many StaffServices (many-to-many)
   - has many Bookings
 
 ### 3.7 StaffService
@@ -182,7 +184,6 @@ Sentio — это multi-tenant SaaS-система для онлайн-запи�
   - service_id
   - custom_price_minor (optional)
   - custom_duration_minutes (optional)
-  - location_id (optional)
   - is_featured (flag)
   - created_at, updated_at
 
@@ -277,10 +278,10 @@ Sentio — это multi-tenant SaaS-система для онлайн-запи�
 - **Key fields:**
   - id
   - tenant_id
-  - customer_id
+  - tenant_customer_id
   - staff_member_id
   - service_id
-  - timeslot_id
+  - time_slot_id
   - booking_status (confirmed / cancelled / no_show / done / no_history)
   - created_at, updated_at
   

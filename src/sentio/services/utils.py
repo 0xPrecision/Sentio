@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 from typing import TYPE_CHECKING
 
 from sentio.core.enums import BookingStatus
