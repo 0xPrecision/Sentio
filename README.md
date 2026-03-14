@@ -9,7 +9,8 @@
 ![Architecture](https://img.shields.io/badge/architecture-multi--tenant-informational)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-**Инструменты разработки:**  
+**Инструменты разработки:**
+
 ![Black](https://img.shields.io/badge/code%20style-black-000000)
 ![Ruff](https://img.shields.io/badge/linter-ruff-red)
 ![Mypy](https://img.shields.io/badge/type%20check-mypy-blue)
