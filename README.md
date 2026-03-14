@@ -1,5 +1,22 @@
 # Sentio
 
+---
+
+![Python](https://img.shields.io/badge/Python-3.13+-blue?logo=python)
+![FastAPI](https://img.shields.io/badge/FastAPI-backend-009688?logo=fastapi)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-database-4169E1?logo=postgresql)
+![Status](https://img.shields.io/badge/status-in%20development-yellow)
+![Architecture](https://img.shields.io/badge/architecture-multi--tenant-informational)
+![License](https://img.shields.io/badge/license-MIT-green)
+
+**Инструменты разработки:**  
+![Black](https://img.shields.io/badge/code%20style-black-000000)
+![Ruff](https://img.shields.io/badge/linter-ruff-red)
+![Mypy](https://img.shields.io/badge/type%20check-mypy-blue)
+![Pytest](https://img.shields.io/badge/tests-pytest-0A9EDC?logo=pytest)
+
+---
+
 > **Sentio** — backend-проект для SaaS-платформы онлайн-записи в сфере услуг. В репозитории реализованы предметная модель для салонов и студий, HTTP API на FastAPI, слой сервисов и репозиториев, работа с PostgreSQL и бизнес-логика бронирования, отмен и расписаний. Проект находится в активной разработке и представлен как сильная портфельная работа с архитектурой, приближённой к реальным production-подходам.
 
 ## Обзор
@@ -303,3 +320,12 @@ curl -X PATCH "http://localhost:8000/api/bookings/42/cancel" \
 ## Итог
 
 Sentio стоит воспринимать как сильный backend-проект в активной разработке. Уже сейчас в нём есть то, что действительно важно для портфолио: продуманная предметная модель, сервисный слой, multi-tenant архитектура, роли доступа, миграции, работа с PostgreSQL и прикладная логика вокруг бронирований и расписаний.
+
+## Контакты
+
+- Telegram: [@OxPrecision](https://t.me/OxPrecision)
+- Email: wrkfrvr@gmail.com
+
+---
+
+© 2025 Nikita OxPrecision. All rights reserved.
